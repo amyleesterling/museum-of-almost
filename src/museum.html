@@ -1,0 +1,186 @@
+<div id="museum-almost">
+  <style>
+    #museum-almost { --font-size-base:16px; --font-size-normal:16px; --font-size-small:14px; --font-size-tooltip:14px; color:var(--foreground); font-family:system-ui,sans-serif; font-size:16px; line-height:1.5; padding:12px 0 20px; max-width:736px; margin:0 auto; }
+    #museum-almost .museum-heading { font-family:Georgia,serif; font-weight:400; font-size:clamp(32px,6vw,46px); line-height:1.2; margin:0 0 10px; }
+    #museum-almost .museum-intro { margin:0 0 24px; font-size:16px; }
+    #museum-almost .museum-nav { display:flex; flex-wrap:wrap; gap:8px; }
+    #museum-almost .museum-stage { width:100%; height:340px; display:block; }
+    #museum-almost .museum-caption { display:flex; align-items:flex-start; justify-content:space-between; gap:18px; flex-wrap:wrap; }
+    #museum-almost .museum-caption h3 { font-family:Georgia,serif; font-size:24px; line-height:1.35; font-weight:400; margin:0 0 8px; }
+    #museum-almost .museum-note { font-size:16px; margin:0; max-width:46ch; }
+    #museum-almost .museum-number { font-size:14px; margin:22px 0 0; }
+    @media(max-width:440px) { #museum-almost .museum-stage { height:280px; } }
+  </style>
+  <h2 class="museum-heading">The Museum of Almost</h2>
+  <p class="museum-intro">Three useful things that do not exist.</p>
+  <div class="museum-nav" role="group" aria-label="Choose an exhibit">
+    <button type="button" class="btn" aria-pressed="true" data-exhibit="0">Compass</button>
+    <button type="button" class="btn" aria-pressed="false" data-exhibit="1">Umbrella</button>
+    <button type="button" class="btn" aria-pressed="false" data-exhibit="2">Spare minute</button>
+  </div>
+  <canvas class="museum-stage" role="img" aria-label="A brass compass on a small pedestal, pointing somewhere unexpected."></canvas>
+  <div class="museum-caption">
+    <div aria-live="polite" aria-atomic="true">
+      <h3 data-name>A compass for getting lost</h3>
+      <p class="museum-note" data-note>It points toward something you haven't tried.</p>
+    </div>
+    <button type="button" class="btn btn-primary" data-action>Take the scenic route</button>
+  </div>
+  <p class="museum-number" data-number>Object 01 / 03 · Brass, possibility</p>
+  <script>
+  (() => {
+    const root = document.getElementById('museum-almost');
+    const canvas = root.querySelector('canvas');
+    const ctx = canvas.getContext('2d');
+    const title = root.querySelector('[data-name]');
+    const note = root.querySelector('[data-note]');
+    const number = root.querySelector('[data-number]');
+    const action = root.querySelector('[data-action]');
+    const buttons = [...root.querySelectorAll('[data-exhibit]')];
+    const exhibits = [
+      {name:'A compass for getting lost', note:"It points toward something you haven't tried.", action:'Take the scenic route', material:'Brass, possibility', alt:'A brass compass on a small pedestal, pointing somewhere unexpected.'},
+      {name:'An umbrella for clouds', note:'Sometimes the sky needs its rain back.', action:'Return the rain', material:'Copper, reverse weather', alt:'A copper umbrella beneath a small cloud; drops can travel upward into the cloud.'},
+      {name:'One spare minute', note:'No appointments. No useful purpose required.', action:'Borrow a minute', material:'Glass, unallocated time', alt:'An hourglass held in a brass frame. Its sand returns to the upper bulb when you borrow a minute.'}
+    ];
+    let current=0, width=0, height=0, raf=0, start=0, progress=1, turns=0, minutes=0, rainUp=false;
+    let fromAngle=-0.6, toAngle=-0.6, clockFlip=0;
+    let palette;
+    const tau=Math.PI*2;
+    const reduced=matchMedia('(prefers-reduced-motion: reduce)');
+    function colors() {
+      const probe=document.createElement('span'); root.append(probe);
+      const read=name=>{probe.style.color='var('+name+')'; return getComputedStyle(probe).color;};
+      palette={ink:read('--foreground'), paper:read('--background'), gold:read('--orange'), leaf:read('--green'), muted:read('--muted-foreground')};
+      probe.remove();
+    }
+    function path(points, color, line=1.5, fill=false, alpha=1) {
+      ctx.globalAlpha=alpha; ctx.beginPath();
+      points.forEach((p,i)=>i?ctx.lineTo(...p):ctx.moveTo(...p));
+      if(fill){ctx.closePath();ctx.fillStyle=color;ctx.fill();}
+      else{ctx.strokeStyle=color;ctx.lineWidth=line;ctx.stroke();}
+      ctx.globalAlpha=1;
+    }
+    function ellipse(x,y,rx,ry,color,fill=false,alpha=1,line=1.5) {
+      ctx.globalAlpha=alpha;ctx.beginPath();ctx.ellipse(x,y,rx,ry,0,0,tau);
+      if(fill){ctx.fillStyle=color;ctx.fill();}else{ctx.strokeStyle=color;ctx.lineWidth=line;ctx.stroke();}
+      ctx.globalAlpha=1;
+    }
+    function pedestal() {
+      ellipse(0,133,167,14,palette.ink,true,.045);
+      path([[-112,96],[-112,119],[0,143],[112,119],[112,96]],palette.ink,1.4,false,.25);
+      path([[-112,96],[0,120],[112,96],[0,73],[-112,96]],palette.ink,1.4,false,.35);
+      path([[0,120],[0,143]],palette.ink,1.4,false,.2);
+    }
+    function compass(t) {
+      const a=fromAngle+(toAngle-fromAngle)*t;
+      ellipse(0,91,84,13,palette.ink,true,.08);
+      path([[-116,0],[-116,17],[116,17],[116,0]],palette.gold,1.5,false,.5);
+      ellipse(0,18,116,68,palette.gold,true,.1);
+      ellipse(0,18,116,68,palette.gold,false,.8,2);
+      ellipse(0,0,116,68,palette.paper,true);
+      ellipse(0,0,116,68,palette.gold,false,1,3);
+      ellipse(0,0,105,60,palette.gold,false,.7);
+      ellipse(0,0,93,53,palette.ink,false,.2);
+      for(let i=0;i<60;i++){
+        const v=i*tau/60, r=i%5===0?81:88;
+        path([[Math.cos(v)*r,Math.sin(v)*r*.57],[Math.cos(v)*95,Math.sin(v)*54]],palette.ink,i%5===0?1.7:1,false,i%5===0?.55:.22);
+      }
+      for(let i=0;i<8;i++){
+        const v=i*tau/8, p=(r,d=0)=>[Math.cos(v+d)*r,Math.sin(v+d)*r*.57];
+        path([p(6),p(56),p(18,.22)],palette.gold,1,true,.2);
+      }
+      const point=(r,d=0)=>[Math.cos(a+d)*r,Math.sin(a+d)*r*.57];
+      path([point(82),point(13,Math.PI/2),point(-63),point(13,-Math.PI/2)],palette.paper,1,true);
+      path([point(82),point(13,Math.PI/2),point(0)],palette.gold,1,true,.95);
+      path([point(82),point(13,-Math.PI/2),point(0)],palette.gold,1,true,.45);
+      path([point(-63),point(13,Math.PI/2),point(0)],palette.ink,1,true,.4);
+      path([point(-63),point(13,-Math.PI/2),point(0)],palette.ink,1,true,.15);
+      ellipse(0,0,7,4,palette.gold,true);
+      ellipse(0,-80,15,9,palette.gold,false,.9,2);
+      path([[0,-68],[0,-71]],palette.gold,2);
+      const sparks=t<1?Math.sin(t*Math.PI):0;
+      for(let i=0;i<9;i++){
+        const v=i*tau/9+t*1.2;
+        ellipse(Math.cos(v)*(128+25*t),Math.sin(v)*83,2,2,palette.gold,true,sparks*.7);
+      }
+    }
+    function umbrella(t) {
+      const moving=t<1;
+      for(let i=0;i<21;i++){
+        const x=-132+(i*47%265), initial=(i*61%145);
+        let y=-81+initial;
+        if(moving)y=rainUp?63-((initial+t*200)%155):-91+((initial+t*200)%155);
+        const delta=rainUp?-9:9;
+        path([[x,y],[x-2,y+delta]],palette.leaf,1.5,false,.38);
+      }
+      ctx.strokeStyle=palette.gold;ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(0,-43);ctx.lineTo(0,77);ctx.bezierCurveTo(0,111,39,107,34,81);ctx.stroke();
+      ctx.beginPath();ctx.moveTo(-113,0);ctx.bezierCurveTo(-85,-111,79,-111,113,0);
+      ctx.bezierCurveTo(89,-13,66,-12,48,3);ctx.bezierCurveTo(24,-12,-23,-12,-48,3);ctx.bezierCurveTo(-67,-12,-90,-13,-113,0);
+      ctx.fillStyle=palette.paper;ctx.fill();ctx.fillStyle=palette.gold;ctx.globalAlpha=.16;ctx.fill();ctx.globalAlpha=1;ctx.strokeStyle=palette.gold;ctx.lineWidth=2;ctx.stroke();
+      [-48,48].forEach(x=>{ctx.beginPath();ctx.moveTo(0,-80);ctx.bezierCurveTo(x*.72,-65,x*.94,-35,x,3);ctx.strokeStyle=palette.gold;ctx.lineWidth=1.2;ctx.stroke();});
+      path([[0,-79],[0,-94]],palette.gold,2);
+      ctx.beginPath();ctx.moveTo(-57,-121);ctx.bezierCurveTo(-86,-148,-39,-164,-23,-147);ctx.bezierCurveTo(-17,-182,45,-175,42,-146);ctx.bezierCurveTo(79,-153,88,-121,57,-116);ctx.bezierCurveTo(15,-111,-22,-110,-57,-121);
+      ctx.fillStyle=palette.paper;ctx.fill();ctx.globalAlpha=.1;ctx.fillStyle=palette.leaf;ctx.fill();ctx.globalAlpha=.7;ctx.strokeStyle=palette.leaf;ctx.lineWidth=2;ctx.stroke();ctx.globalAlpha=1;
+      if(rainUp&&t===1){
+        [-31,-12,8,29].forEach((x,i)=>{ellipse(x,-137-i%2*7,2,2,palette.leaf,true,.7);});
+      }
+    }
+    function hourglass(t) {
+      ctx.save();ctx.translate(0,-9);ctx.rotate(clockFlip+Math.PI*(t-1));
+      ellipse(0,0,108,108,palette.ink,false,.09);
+      for(let i=0;i<12;i++){
+        const a=i*tau/12;path([[Math.cos(a)*104,Math.sin(a)*104],[Math.cos(a)*109,Math.sin(a)*109]],palette.ink,1,false,.25);
+      }
+      [-62,62].forEach(x=>path([[x,-82],[x,82]],palette.gold,4));
+      ctx.beginPath();ctx.moveTo(-45,-76);ctx.bezierCurveTo(-47,-38,-17,-10,-7,0);ctx.bezierCurveTo(-17,14,-47,37,-45,76);ctx.lineTo(45,76);ctx.bezierCurveTo(47,37,17,14,7,0);ctx.bezierCurveTo(17,-10,47,-38,45,-76);ctx.closePath();
+      ctx.fillStyle=palette.paper;ctx.fill();ctx.fillStyle=palette.leaf;ctx.globalAlpha=.055;ctx.fill();ctx.globalAlpha=.7;ctx.strokeStyle=palette.leaf;ctx.lineWidth=1.5;ctx.stroke();ctx.globalAlpha=1;
+      path([[-33,49],[0,28],[33,49],[39,68],[-39,68]],palette.gold,1,true,.65);
+      path([[-33,-57],[33,-57],[15,-25],[0,-11],[-15,-25]],palette.gold,1,true,.18);
+      path([[0,-9],[0,27]],palette.gold,1.4,false,.65);
+      [-83,83].forEach(y=>{ellipse(0,y,77,12,palette.paper,true);ellipse(0,y,77,12,palette.gold,true,.16);ellipse(0,y,77,12,palette.gold,false,.9,2);});
+      path([[-32,-61],[-24,-39]],palette.paper,3,false,.8);
+      ctx.restore();
+    }
+    function draw() {
+      const dpr=Math.min(devicePixelRatio||1,2);
+      ctx.setTransform(dpr,0,0,dpr,0,0);ctx.clearRect(0,0,width,height);
+      ctx.translate(width/2,height*.53);const scale=Math.min(width/370,height/345);ctx.scale(scale,scale);
+      ctx.lineCap='round';ctx.lineJoin='round';
+      pedestal();
+      const ease=1-Math.pow(1-progress,3);
+      if(current===0)compass(ease);
+      if(current===1)umbrella(progress);
+      if(current===2)hourglass(ease);
+    }
+    function resize() {
+      width=canvas.clientWidth;height=canvas.clientHeight;
+      const dpr=Math.min(devicePixelRatio||1,2);canvas.width=Math.round(width*dpr);canvas.height=Math.round(height*dpr);draw();
+    }
+    function animate() {
+      cancelAnimationFrame(raf);progress=reduced.matches?1:0;start=performance.now();
+      const tick=now=>{progress=Math.min(1,(now-start)/1600);draw();if(progress<1)raf=requestAnimationFrame(tick);};
+      if(reduced.matches)draw();else raf=requestAnimationFrame(tick);
+    }
+    buttons.forEach(button=>button.addEventListener('click',()=>{
+      cancelAnimationFrame(raf); current=Number(button.dataset.exhibit);progress=1;
+      const e=exhibits[current];title.textContent=e.name;note.textContent=e.note;action.textContent=e.action;
+      number.textContent='Object 0'+(current+1)+' / 03 · '+e.material;canvas.setAttribute('aria-label',e.alt);
+      buttons.forEach(b=>b.setAttribute('aria-pressed',String(b===button)));
+      rainUp=false;draw();
+    }));
+    action.addEventListener('click',()=>{
+      if(current===0){
+        const eased=1-Math.pow(1-progress,3);fromAngle=fromAngle+(toAngle-fromAngle)*eased;turns++;
+        toAngle=fromAngle+tau+1.3+(turns%3)*.8;
+        const destinations=['Toward the long way home.','Toward a very interesting wrong turn.','Toward the thing you nearly walked past.','Toward a door with no sensible explanation.'];
+        note.textContent=destinations[(turns-1)%destinations.length];
+      }else if(current===1){rainUp=!rainUp;note.textContent=rainUp?'Returned to sender. With love.':'Sometimes the sky needs its rain back.';action.textContent=rainUp?'Let it fall':'Return the rain';
+      }else{clockFlip+=Math.PI;minutes++;note.textContent=minutes===1?'One extra minute. You owe it nothing.':minutes+' spare minutes. None of them has plans.';action.textContent='Borrow another minute';}
+      animate();
+    });
+    colors();new ResizeObserver(resize).observe(canvas);
+    const themeObserver=new MutationObserver(()=>{colors();draw();});themeObserver.observe(document.documentElement,{attributes:true,attributeFilter:['class','style','data-theme']});
+    matchMedia('(prefers-color-scheme: dark)').addEventListener('change',()=>{colors();draw();});
+  })();
+  </script>
+</div>
