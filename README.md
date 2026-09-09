@@ -24,9 +24,9 @@ Then visit <http://127.0.0.1:8000>.
 
 ## Make something almost
 
-The illustrations and interactions live in `src/museum.html`. The standalone page's colors, buttons, metadata, and document structure live in `src/shell.html`.
+The illustrations and interactions live in `src/museum.html`. The hourglass's timing and sand amounts live in `src/sand-clock.js`. The standalone page's colors, buttons, metadata, and document structure live in `src/shell.html`.
 
-After editing either file, rebuild the checked-in page:
+After editing these source files, rebuild the checked-in page:
 
 ```sh
 python scripts/build.py
@@ -34,7 +34,13 @@ python scripts/build.py
 
 The build uses Python 3.10 or newer and its standard library. Visitors only need a browser. Any static web host can serve the generated `index.html`.
 
-The museum follows the visitor's light or dark appearance, supports keyboard navigation, announces exhibit changes to screen readers, and skips motion when reduced motion is requested. Illustrations are drawn with Canvas; there are no external fonts, images, analytics, or libraries.
+The museum follows the visitor's light or dark appearance, supports keyboard navigation, and announces exhibit changes to screen readers. The hourglass drains for a real minute; turning it over partway through preserves the sand already transferred. Reduced-motion mode skips the spin and moving grains while updating sand levels once a second. Illustrations are drawn with Canvas; there are no external fonts, images, analytics, or libraries.
+
+To check the hourglass timing, reversal, and reduced-motion behavior with Node.js:
+
+```sh
+node --test scripts/sand-clock.test.cjs
+```
 
 ## How this happened
 

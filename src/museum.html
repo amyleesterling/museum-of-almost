@@ -29,6 +29,7 @@
   <p class="museum-number" data-number>Object 01 / 03 · Brass, possibility</p>
   <script>
   (() => {
+    /* SAND_CLOCK */
     const root = document.getElementById('museum-almost');
     const canvas = root.querySelector('canvas');
     const ctx = canvas.getContext('2d');
@@ -40,10 +41,11 @@
     const exhibits = [
       {name:'A compass for getting lost', note:"It points toward something you haven't tried.", action:'Take the scenic route', material:'Brass, possibility', alt:'A brass compass on a small pedestal, pointing somewhere unexpected.'},
       {name:'An umbrella for clouds', note:'Sometimes the sky needs its rain back.', action:'Return the rain', material:'Copper, reverse weather', alt:'A copper umbrella beneath a small cloud; drops can travel upward into the cloud.'},
-      {name:'One spare minute', note:'No appointments. No useful purpose required.', action:'Borrow a minute', material:'Glass, unallocated time', alt:'An hourglass held in a brass frame. Its sand returns to the upper bulb when you borrow a minute.'}
+      {name:'One spare minute', note:'No appointments. No useful purpose required.', action:'Borrow a minute', material:'Glass, unallocated time', alt:'An hourglass held in a brass frame. Turn it over to watch sand fall for one minute.'}
     ];
-    let current=0, width=0, height=0, raf=0, start=0, progress=1, turns=0, minutes=0, rainUp=false;
-    let fromAngle=-0.6, toAngle=-0.6, clockFlip=0;
+    let current=0, width=0, height=0, raf=0, start=0, progress=1, turns=0, rainUp=false;
+    let fromAngle=-0.6, toAngle=-0.6, sandTimer=0, sandPhase='';
+    const sandClock=new SandClock();
     let palette;
     const tau=Math.PI*2;
     const reduced=matchMedia('(prefers-reduced-motion: reduce)');
@@ -125,18 +127,54 @@
         [-31,-12,8,29].forEach((x,i)=>{ellipse(x,-137-i%2*7,2,2,palette.leaf,true,.7);});
       }
     }
-    function hourglass(t) {
-      ctx.save();ctx.translate(0,-9);ctx.rotate(clockFlip+Math.PI*(t-1));
+    function glassPath() {
+      ctx.beginPath();ctx.moveTo(-45,-76);ctx.bezierCurveTo(-47,-38,-17,-10,-7,0);ctx.bezierCurveTo(-17,14,-47,37,-45,76);ctx.lineTo(45,76);ctx.bezierCurveTo(47,37,17,14,7,0);ctx.bezierCurveTo(17,-10,47,-38,45,-76);ctx.closePath();
+    }
+    // Integrate the upper bulb's width once, so equal sand amounts occupy
+    // equal areas even though the glass narrows near the neck.
+    const upperProfile=[];
+    let upperArea=0;
+    for(let i=0;i<=200;i++){
+      const t=i/200,u=1-t;
+      const x=u*u*u*7+3*u*u*t*17+3*u*t*t*47+t*t*t*45;
+      const depth=3*u*u*t*10+3*u*t*t*38+t*t*t*76;
+      if(i)upperArea+=(depth-upperProfile[i-1].depth)*(x+upperProfile[i-1].x);
+      upperProfile.push({depth,x,area:upperArea});
+    }
+    const sandArea=41*58;
+    function sandDepth(amount) {
+      const target=amount*sandArea;
+      for(let i=1;i<upperProfile.length;i++){
+        const a=upperProfile[i-1],b=upperProfile[i];
+        if(b.area>=target)return a.depth+(b.depth-a.depth)*(target-a.area)/(b.area-a.area);
+      }
+      return 76;
+    }
+    function hourglass() {
+      const now=performance.now(),sand=sandClock.read(now);
+      ctx.save();ctx.translate(0,-9);ctx.rotate(sand.angle);
       ellipse(0,0,108,108,palette.ink,false,.09);
       for(let i=0;i<12;i++){
         const a=i*tau/12;path([[Math.cos(a)*104,Math.sin(a)*104],[Math.cos(a)*109,Math.sin(a)*109]],palette.ink,1,false,.25);
       }
       [-62,62].forEach(x=>path([[x,-82],[x,82]],palette.gold,4));
-      ctx.beginPath();ctx.moveTo(-45,-76);ctx.bezierCurveTo(-47,-38,-17,-10,-7,0);ctx.bezierCurveTo(-17,14,-47,37,-45,76);ctx.lineTo(45,76);ctx.bezierCurveTo(47,37,17,14,7,0);ctx.bezierCurveTo(17,-10,47,-38,45,-76);ctx.closePath();
+      glassPath();
       ctx.fillStyle=palette.paper;ctx.fill();ctx.fillStyle=palette.leaf;ctx.globalAlpha=.055;ctx.fill();ctx.globalAlpha=.7;ctx.strokeStyle=palette.leaf;ctx.lineWidth=1.5;ctx.stroke();ctx.globalAlpha=1;
-      path([[-33,49],[0,28],[33,49],[39,68],[-39,68]],palette.gold,1,true,.65);
-      path([[-33,-57],[33,-57],[15,-25],[0,-11],[-15,-25]],palette.gold,1,true,.18);
-      path([[0,-9],[0,27]],palette.gold,1.4,false,.65);
+      ctx.save();glassPath();ctx.clip();
+      const depth=sandDepth(sand.upper),pileScale=Math.sqrt(sand.lower),pileTop=71-58*pileScale;
+      if(sand.upper>0){
+        ctx.fillStyle=palette.gold;ctx.globalAlpha=.72;ctx.fillRect(-50,-depth,100,depth);ctx.globalAlpha=1;
+        path([[-50,-depth],[50,-depth]],palette.gold,1,false,.95);
+      }
+      if(sand.lower>0)path([[-41*pileScale,71],[0,pileTop],[41*pileScale,71]],palette.gold,1,true,.72);
+      if(sand.flowing&&!reduced.matches){
+        path([[0,-2],[0,pileTop]],palette.gold,1,false,.28);
+        for(let i=0;i<11;i++){
+          const phase=((now/650+i/11)%1),y=phase*phase*pileTop;
+          ellipse(Math.sin(i*7.3)*1.15,y,.9,1.5,palette.gold,true,.85);
+        }
+      }
+      ctx.restore();
       [-83,83].forEach(y=>{ellipse(0,y,77,12,palette.paper,true);ellipse(0,y,77,12,palette.gold,true,.16);ellipse(0,y,77,12,palette.gold,false,.9,2);});
       path([[-32,-61],[-24,-39]],palette.paper,3,false,.8);
       ctx.restore();
@@ -150,7 +188,7 @@
       const ease=1-Math.pow(1-progress,3);
       if(current===0)compass(ease);
       if(current===1)umbrella(progress);
-      if(current===2)hourglass(ease);
+      if(current===2)hourglass();
     }
     function resize() {
       width=canvas.clientWidth;height=canvas.clientHeight;
@@ -161,12 +199,38 @@
       const tick=now=>{progress=Math.min(1,(now-start)/1600);draw();if(progress<1)raf=requestAnimationFrame(tick);};
       if(reduced.matches)draw();else raf=requestAnimationFrame(tick);
     }
+    function stopAnimation() {
+      cancelAnimationFrame(raf);clearTimeout(sandTimer);
+    }
+    function updateSandCopy(sand) {
+      const phase=sand.turning?'turning':sand.flowing?'flowing':sand.hasRun?'finished':'ready';
+      action.disabled=sand.turning;
+      if(phase===sandPhase)return;
+      sandPhase=phase;
+      action.textContent=sand.turning?'Turning over…':sand.flowing?'Turn it over':sand.hasRun?'Borrow another minute':'Borrow a minute';
+      note.textContent=sand.turning?'A small change of perspective.':sand.flowing?'One quiet minute. You owe it nothing.':sand.hasRun?'That minute was yours. There is no hurry.':exhibits[2].note;
+      canvas.setAttribute('aria-label',sand.turning?'The hourglass is turning over.':sand.flowing?'Sand is draining from the top bulb, falling through the neck, and collecting in a pile below.':'The sand rests in the bottom bulb. Turn the hourglass over to start one minute.');
+    }
+    function runHourglass() {
+      stopAnimation();
+      const tick=()=>{
+        if(current!==2)return;
+        const sand=sandClock.read(performance.now());
+        updateSandCopy(sand);draw();
+        if(sand.turning||sand.flowing){
+          if(reduced.matches)sandTimer=setTimeout(tick,1000);
+          else raf=requestAnimationFrame(tick);
+        }
+      };
+      tick();
+    }
     buttons.forEach(button=>button.addEventListener('click',()=>{
-      cancelAnimationFrame(raf); current=Number(button.dataset.exhibit);progress=1;
+      stopAnimation(); current=Number(button.dataset.exhibit);progress=1;action.disabled=false;sandPhase='';
       const e=exhibits[current];title.textContent=e.name;note.textContent=e.note;action.textContent=e.action;
       number.textContent='Object 0'+(current+1)+' / 03 · '+e.material;canvas.setAttribute('aria-label',e.alt);
       buttons.forEach(b=>b.setAttribute('aria-pressed',String(b===button)));
-      rainUp=false;draw();
+      rainUp=false;
+      if(current===2)runHourglass();else draw();
     }));
     action.addEventListener('click',()=>{
       if(current===0){
@@ -175,12 +239,15 @@
         const destinations=['Toward the long way home.','Toward a very interesting wrong turn.','Toward the thing you nearly walked past.','Toward a door with no sensible explanation.'];
         note.textContent=destinations[(turns-1)%destinations.length];
       }else if(current===1){rainUp=!rainUp;note.textContent=rainUp?'Returned to sender. With love.':'Sometimes the sky needs its rain back.';action.textContent=rainUp?'Let it fall':'Return the rain';
-      }else{clockFlip+=Math.PI;minutes++;note.textContent=minutes===1?'One extra minute. You owe it nothing.':minutes+' spare minutes. None of them has plans.';action.textContent='Borrow another minute';}
+      }else{
+        sandClock.flip(performance.now(),reduced.matches);runHourglass();return;
+      }
       animate();
     });
     colors();new ResizeObserver(resize).observe(canvas);
     const themeObserver=new MutationObserver(()=>{colors();draw();});themeObserver.observe(document.documentElement,{attributes:true,attributeFilter:['class','style','data-theme']});
     matchMedia('(prefers-color-scheme: dark)').addEventListener('change',()=>{colors();draw();});
+    reduced.addEventListener('change',()=>{if(current===2)runHourglass();});
   })();
   </script>
 </div>

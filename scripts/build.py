@@ -4,6 +4,10 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 fragment = (ROOT / "src" / "museum.html").read_text(encoding="utf-8")
+clock = (ROOT / "src" / "sand-clock.js").read_text(encoding="utf-8")
+if fragment.count("/* SAND_CLOCK */") != 1:
+    raise ValueError("The exhibit source must contain exactly one sand clock marker.")
+fragment = fragment.replace("/* SAND_CLOCK */", clock)
 shell = (ROOT / "src" / "shell.html").read_text(encoding="utf-8")
 marker = "<!-- MUSEUM -->"
 if shell.count(marker) != 1:
