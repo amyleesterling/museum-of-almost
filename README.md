@@ -2,11 +2,12 @@
 
 Ideas that didn't quite work out.
 
-A tiny interactive museum of impossible objects:
+A tiny interactive museum of impossible objects—and one beautifully documented failure:
 
 - **A compass for getting lost.** It points toward something you haven't tried.
 - **An umbrella for clouds.** Sometimes the sky needs its rain back.
 - **One spare minute.** No appointments. No useful purpose required.
+- **The dragon the browser couldn't imagine.** The future required WebGL. The cloud arrived without eyeballs.
 
 Admission is free. You may touch the exhibits.
 
