@@ -12,7 +12,7 @@
     @media(max-width:440px) { #museum-almost .museum-stage { height:280px; } }
   </style>
   <h2 class="museum-heading">The Museum of Almost</h2>
-  <p class="museum-intro">Three useful things that do not exist, and one that almost did.</p>
+  <p class="museum-intro">Four useful things that do not exist.</p>
   <div class="museum-nav" role="group" aria-label="Choose an exhibit">
     <button type="button" class="btn" aria-pressed="true" data-exhibit="0">Compass</button>
     <button type="button" class="btn" aria-pressed="false" data-exhibit="1">Umbrella</button>
@@ -43,7 +43,7 @@
       {name:'A compass for getting lost', note:"It points toward something you haven't tried.", action:'Take the scenic route', material:'Brass, possibility', alt:'A brass compass on a small pedestal, pointing somewhere unexpected.'},
       {name:'An umbrella for clouds', note:'Sometimes the sky needs its rain back.', action:'Return the rain', material:'Copper, reverse weather', alt:'A copper umbrella beneath a small cloud; drops can travel upward into the cloud.'},
       {name:'One spare minute', note:'No appointments. No useful purpose required.', action:'Borrow a minute', material:'Glass, unallocated time', alt:'An hourglass held in a brass frame. Turn it over to watch sand fall for one minute.'},
-      {name:"The dragon the browser couldn't imagine", note:'The dragon was ready. The browser forgot how to see in three dimensions.', action:'Give it depth', material:'Leaves, gold, missing WebGL', alt:'A green and gold leaf-winged dragon shimmers inside the outline of a browser window, almost becoming three-dimensional.'}
+      {name:'A dragon for unfinished things', note:'It keeps almosts warm until they are ready.', action:'Entrust an almost', material:'Leaves, patience', alt:'A gentle green leaf-winged dragon curls protectively around a collection of small unfinished shapes.'}
     ];
     let current=0, width=0, height=0, raf=0, start=0, progress=1, turns=0, rainUp=false, dragonAttempt=0;
     let fromAngle=-0.6, toAngle=-0.6, sandTimer=0, sandPhase='';
@@ -182,50 +182,53 @@
       ctx.restore();
     }
     function dragon(t) {
-      const trying=dragonAttempt>0&&t<1, failed=dragonAttempt>0&&t>=1;
-      const jitter=trying?Math.sin(t*95)*(1-t)*3:0;
-      ctx.save();ctx.translate(jitter,-3);
-      // The browser window is the display case—and, on this occasion, the obstacle.
-      ctx.strokeStyle=palette.ink;ctx.lineWidth=1.5;ctx.globalAlpha=.24;
-      ctx.strokeRect(-153,-119,306,220);
-      ellipse(-132,-99,3,3,palette.gold,true,.7);
-      ellipse(-120,-99,3,3,palette.leaf,true,.7);
-      ellipse(-108,-99,3,3,palette.ink,true,.35);
-      path([[-153,-87],[153,-87]],palette.ink,1,false,.18);
-      // Leaf wings with hand-drawn veins.
-      path([[-20,-20],[28,-99],[129,-74],[84,12],[26,25]],palette.leaf,1.8,true,.13);
-      path([[12,-18],[-29,-91],[-112,-62],[-70,5],[-18,24]],palette.leaf,1.8,true,.08);
-      [[-20,-20],[28,-99],[129,-74],[84,12],[26,25]].slice(1).forEach(p=>path([[-20,-20],p],palette.leaf,1.2,false,.55));
-      [[12,-18],[-29,-91],[-112,-62],[-70,5],[-18,24]].slice(1).forEach(p=>path([[12,-18],p],palette.leaf,1,false,.38));
-      // Body, tail, long neck, crown and feet.
-      ellipse(14,30,74,38,palette.leaf,true,.13);
-      ellipse(14,30,74,38,palette.leaf,false,.75,2);
-      ctx.beginPath();ctx.moveTo(-35,25);ctx.bezierCurveTo(-60,5,-67,-34,-48,-59);
-      ctx.bezierCurveTo(-34,-78,-12,-77,1,-65);ctx.strokeStyle=palette.gold;ctx.lineWidth=18;ctx.globalAlpha=.18;ctx.stroke();
-      ctx.strokeStyle=palette.gold;ctx.lineWidth=2;ctx.globalAlpha=.85;ctx.stroke();
-      ellipse(-39,-68,27,16,palette.gold,true,.16);ellipse(-39,-68,27,16,palette.gold,false,.9,1.6);
-      path([[-55,-80],[-47,-103],[-37,-81],[-25,-105],[-24,-77]],palette.gold,1.7,false,.9);
-      ellipse(-49,-70,2.5,2.5,palette.leaf,true,.95);
-      ctx.beginPath();ctx.moveTo(76,35);ctx.bezierCurveTo(126,47,132,80,104,86);ctx.strokeStyle=palette.leaf;ctx.lineWidth=12;ctx.globalAlpha=.18;ctx.stroke();
-      ctx.strokeStyle=palette.leaf;ctx.lineWidth=2;ctx.globalAlpha=.8;ctx.stroke();
-      [[-31,52,-48,85],[-5,60,-12,91],[40,59,31,91],[63,50,67,85]].forEach(q=>{
-        path([[q[0],q[1]],[q[2],q[3]]],palette.gold,5,false,.4);
-        path([[q[2]-5,q[3]],[q[2],q[3]-4],[q[2]+5,q[3]]],palette.ink,1,false,.55);
+      ctx.save();ctx.translate(0,-4);
+      // Broad leaf wings, with their veins still visible.
+      path([[-18,-5],[18,-91],[126,-68],[78,16],[28,31]],palette.leaf,1.8,true,.11);
+      path([[8,-7],[-36,-82],[-123,-55],[-70,12],[-20,28]],palette.leaf,1.8,true,.07);
+      [[18,-91],[126,-68],[78,16],[28,31]].forEach(p=>path([[-18,-5],p],palette.leaf,1.1,false,.55));
+      [[-36,-82],[-123,-55],[-70,12],[-20,28]].forEach(p=>path([[8,-7],p],palette.leaf,1,false,.36));
+      // A long, calm dragon curled around the things entrusted to it.
+      ellipse(17,34,72,35,palette.leaf,true,.11);
+      ellipse(17,34,72,35,palette.leaf,false,.78,2);
+      ctx.beginPath();ctx.moveTo(-34,29);ctx.bezierCurveTo(-62,8,-68,-35,-48,-59);
+      ctx.bezierCurveTo(-34,-76,-12,-76,2,-63);
+      ctx.strokeStyle=palette.gold;ctx.lineWidth=17;ctx.globalAlpha=.13;ctx.stroke();
+      ctx.strokeStyle=palette.gold;ctx.lineWidth=2;ctx.globalAlpha=.88;ctx.stroke();
+      ellipse(-39,-68,27,15,palette.paper,true);
+      ellipse(-39,-68,27,15,palette.gold,true,.12);
+      ellipse(-39,-68,27,15,palette.gold,false,.9,1.6);
+      path([[-56,-78],[-48,-99],[-38,-79],[-27,-101],[-23,-76]],palette.gold,1.6,false,.9);
+      ellipse(-49,-69,2.5,2.5,palette.leaf,true,.95);
+      path([[-63,-64],[-72,-61],[-63,-59]],palette.gold,1,false,.7);
+      ctx.beginPath();ctx.moveTo(76,37);ctx.bezierCurveTo(130,45,135,79,105,87);
+      ctx.bezierCurveTo(87,91,78,77,88,70);
+      ctx.strokeStyle=palette.leaf;ctx.lineWidth=12;ctx.globalAlpha=.11;ctx.stroke();
+      ctx.strokeStyle=palette.leaf;ctx.lineWidth=2;ctx.globalAlpha=.82;ctx.stroke();
+      [[-29,54,-45,84],[-4,62,-10,91],[39,60,31,90],[62,52,67,84]].forEach(q=>{
+        path([[q[0],q[1]],[q[2],q[3]]],palette.gold,4,false,.35);
+        path([[q[2]-5,q[3]],[q[2],q[3]-4],[q[2]+5,q[3]]],palette.ink,1,false,.48);
       });
-      for(let i=0;i<9;i++)path([[-13+i*13,2-Math.sin(i)*4],[-8+i*13,-9-Math.sin(i)*4]],palette.gold,1.2,false,.65);
-      // A projected third axis appears while the model tries to acquire depth.
-      if(trying){
-        ctx.globalAlpha=.55*(1-t);
-        for(let i=0;i<18;i++){
-          const a=i*tau/18+t*9;
-          ellipse(Math.cos(a)*(92+18*t),Math.sin(a)*61,1.7,1.7,i%2?palette.leaf:palette.gold,true);
-        }
+      for(let i=0;i<8;i++)path([[-10+i*13,5-Math.sin(i)*3],[-6+i*13,-5-Math.sin(i)*3]],palette.gold,1.1,false,.55);
+      // Unfinished treasures: an open circle, half a star, and a wandering line.
+      ctx.beginPath();ctx.arc(-9,45,9,.4,tau-1);ctx.strokeStyle=palette.gold;ctx.lineWidth=1.5;ctx.globalAlpha=.7;ctx.stroke();
+      path([[8,49],[14,38],[20,49]],palette.leaf,1.5,false,.72);
+      ctx.beginPath();ctx.moveTo(28,48);ctx.bezierCurveTo(34,35,42,57,49,43);ctx.strokeStyle=palette.ink;ctx.lineWidth=1.2;ctx.globalAlpha=.38;ctx.stroke();
+      // Each entrusted almost becomes a small warm spark beneath the wing.
+      const kept=Math.min(dragonAttempt,6);
+      for(let i=0;i<kept;i++){
+        const a=-.35+i*.36, x=10+Math.cos(a)*24, y=37+Math.sin(a)*13;
+        ellipse(x,y,3.2,3.2,palette.gold,true,.28);
+        ellipse(x,y,1.5,1.5,palette.gold,true,.92);
       }
-      if(failed){
-        ctx.globalAlpha=.94;ctx.fillStyle=palette.paper;ctx.fillRect(-73,-8,146,51);
-        ctx.strokeStyle=palette.gold;ctx.lineWidth=1.5;ctx.strokeRect(-73,-8,146,51);
-        ctx.fillStyle=palette.ink;ctx.textAlign='center';ctx.font='600 13px system-ui,sans-serif';ctx.fillText('WEBGL: ALMOST',0,14);
-        ctx.fillStyle=palette.muted;ctx.font='11px system-ui,sans-serif';ctx.fillText('depth unavailable in this browser',0,31);
+      if(dragonAttempt>0&&t<1){
+        const x=-142+(145*t), y=-61+88*t-35*Math.sin(t*Math.PI);
+        ellipse(x,y,5,5,palette.gold,true,.16);
+        ellipse(x,y,2.2,2.2,palette.gold,true,.9);
+        for(let i=0;i<4;i++){
+          const a=i*Math.PI/2+t*3;
+          path([[x+Math.cos(a)*7,y+Math.sin(a)*7],[x+Math.cos(a)*11,y+Math.sin(a)*11]],palette.gold,1,false,.55);
+        }
       }
       ctx.restore();ctx.globalAlpha=1;
     }
@@ -294,8 +297,8 @@
         sandClock.flip(performance.now(),reduced.matches);runHourglass();return;
       }else{
         dragonAttempt++;
-        note.textContent='The future required WebGL. The cloud arrived without eyeballs.';
-        action.textContent='Try again, heroically';
+        note.textContent='Safely kept. Almost is a stage, not a verdict.';
+        action.textContent='Entrust another';
       }
       animate();
     });
